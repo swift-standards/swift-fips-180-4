@@ -1,0 +1,3 @@
+K-05 vehicle: this file stands in for hostile candidate content carried by an
+untrusted same-repo pull request. The probe job asserts that the head content
+observes no key, token, or private material and cannot write a ref.
