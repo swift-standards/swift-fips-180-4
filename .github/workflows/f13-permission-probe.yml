@@ -1,79 +1,305 @@
-# F13 permission canaries (Goal swift-institute/.github#358, #393).
-# Branch-only: a workflow absent from the default branch cannot be
-# dispatched by name (GitHub 404s the lookup), so it fires on push to
-# this canary branch. The leaf's context evidence is already sealed at
-# run 31094028413. Deleted with the branch.
+# F13 permission canaries (Goal swift-institute/.github#358, sub-issue #393).
 #
-# Each job asserts the DENIAL, not merely the absence of a success:
-# a step that expects refusal fails the job when the operation succeeds,
-# so a broken probe cannot read as a clean result.
+# Branch-only. A workflow absent from the default branch cannot be dispatched
+# by name (GitHub 404s the lookup), so these fire on push to the canary branch
+# and on pull requests targeting it. Deleted with the branch.
+#
+# Discipline: every job ASSERTS THE REFUSAL — it fails when the forbidden
+# operation succeeds — and every job carries a POSITIVE CONTROL proving the
+# instrument ran. No step ever prints a secret value; presence is tested only
+# as non-emptiness.
+
 name: f13-permission-probe
 
 on:
   push:
     branches:
       - f13-direct-canary
+  pull_request:
+    branches:
+      - f13-direct-canary
 
 permissions: {}
 
 jobs:
-  # K-06: the direct form's root ceiling. Reads work; writes are denied.
+  # K-06: the direct form's root ceiling. Reads work; writes are refused.
   k06-read-ceiling:
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
     steps:
-      - name: Read is permitted (positive control)
+      - name: Positive control — contents:read performs a read
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}" --jq .sha
-      - name: Write is denied (asserted refusal)
+      - name: Positive control — actions:read performs an Actions read
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/actions/workflows" --jq .total_count
+      - name: Asserted refusal — the granted token cannot create a ref
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-               -f ref="refs/heads/f13-probe-must-not-exist" \
-               -f sha="${GITHUB_SHA}" 2>probe.err; then
-            echo "::error::contents:read token created a ref — the ceiling does not hold"
+               -f ref="refs/heads/f13-probe-k06-must-not-exist" \
+               -f sha="${GITHUB_SHA}" >/dev/null 2>probe.err; then
+            echo "::error::a contents:read token created a ref — the ceiling does not hold"
             exit 1
           fi
-          echo "refused as required:"; cat probe.err
-
-  # K-07: a job that omits the read it needs cannot elevate itself.
-  k07-no-elevation:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: none
-    steps:
-      - name: Required read fails without the grant (asserted refusal)
+          echo "ref creation refused as required"; cat probe.err
+      - name: Asserted refusal — the granted token cannot open an issue
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh api "repos/${GITHUB_REPOSITORY}/contents/Package.swift" >/dev/null 2>probe.err; then
-            echo "::error::contents:none token read repository contents — elevation is possible"
+          if gh api -X POST "repos/${GITHUB_REPOSITORY}/issues" \
+               -f title="f13 probe must not exist" >/dev/null 2>probe.err; then
+            echo "::error::a contents:read token opened an issue — the ceiling does not hold"
             exit 1
           fi
-          echo "refused as required:"; cat probe.err
+          echo "issue creation refused as required"; cat probe.err
 
-  # K-08: no App key or token is observable in an ordinary subject job.
-  k08-mint-isolation:
+  # K-07: a job that omits a grant cannot elevate itself.
+  #
+  # Note on instrument validity: this repository is PUBLIC, so a plain contents
+  # read is not gated by the job grant at all — anonymous callers may perform
+  # it. Asserting on that read would measure repository visibility, not the
+  # permission model. The gated operations on a public repository are writes
+  # and OIDC minting, so those carry the assertions; the public read is
+  # recorded as an observation only.
+  # K-07 control: with an explicit id-token:write grant the OIDC endpoint IS
+  # exposed. Without this, k07's "no OIDC endpoint" step would report clean on
+  # a fleet where OIDC is disabled outright — a broken instrument and a real
+  # refusal are indistinguishable. This job makes the instrument fire.
+  k07-control-oidc-present:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Positive control — a granted job DOES receive an OIDC endpoint
+        run: |
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::id-token:write granted but no OIDC endpoint — k07's OIDC assertion is inert"
+            exit 1
+          fi
+          echo "OIDC endpoint exposed under an explicit grant (URL never printed)"
+
+  k07-no-elevation:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Positive control — the job did receive a token
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::no token — probe cannot report"; exit 1; }
+          echo "token present, length ${#GH_TOKEN} (value never printed)"
+      - name: Asserted refusal — an ungranted job cannot write
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+               -f ref="refs/heads/f13-probe-k07-must-not-exist" \
+               -f sha="${GITHUB_SHA}" >/dev/null 2>probe.err; then
+            echo "::error::an all-none token created a ref — elevation is possible"
+            exit 1
+          fi
+          echo "write refused as required"; cat probe.err
+      - name: Asserted refusal — an ungranted job cannot mint an OIDC identity
+        run: |
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::OIDC request URL present without an id-token grant"
+            exit 1
+          fi
+          echo "no OIDC endpoint exposed, as required"
+      - name: Observation — public read is permitted by visibility, not by grant
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/contents/Package.swift" >/dev/null 2>&1; then
+            echo "public content readable (expected on a public repository)"
+          else
+            echo "public content not readable"
+          fi
+
+  # K-08a: App credentials are absent from an ordinary subject job that does
+  # not name them. Nothing here references the secrets context.
+  k08a-subject-isolation:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: App credentials are absent from the subject (asserted absence)
+      - name: Positive control — the subject job's own token is present
         env:
-          APP_ID: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_ID }}
-          APP_KEY: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_PRIVATE_KEY }}
-          LEGACY_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
           CONTROL: ${{ github.token }}
         run: |
-          [ -n "$CONTROL" ] || { echo "::error::positive control empty — probe cannot report"; exit 1; }
-          for name in APP_ID APP_KEY LEGACY_TOKEN; do
-            if [ -n "${!name}" ]; then
-              echo "::error::$name is observable in an ordinary subject job"
-              exit 1
-            fi
-            echo "$name absent as required"
+          [ -n "$CONTROL" ] || { echo "::error::control empty — probe cannot report"; exit 1; }
+          echo "control token present (value never printed)"
+      - name: Asserted absence — no App or PAT material in the ambient environment
+        run: |
+          hits=0
+          while IFS='=' read -r name _; do
+            case "$name" in
+              *APP_PRIVATE_KEY*|*APP_CLIENT_ID*|*PRIVATE_REPO_TOKEN*|*_PAT|*_PAT_*)
+                echo "::error::credential-shaped variable present in subject job: $name"
+                hits=$((hits+1)) ;;
+            esac
+          done < <(env)
+          if [ -f "$HOME/.netrc" ] || [ -f "$HOME/.git-credentials" ]; then
+            echo "::error::persisted credential file present before checkout"
+            hits=$((hits+1))
+          fi
+          [ "$hits" -eq 0 ] || exit 1
+          echo "no App or PAT material observable, as required"
+      - name: Asserted refusal — the subject job cannot act as the App
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api /app >/dev/null 2>probe.err; then
+            echo "::error::subject token authenticates as a GitHub App"
+            exit 1
+          fi
+          echo "App identity refused as required"; cat probe.err
+
+  # K-08b: a trusted mint yields exactly the scope requested — no more.
+  # contents:read on THIS repository only. The token value is never printed.
+  k08b-mint-scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Mint an App token scoped to contents:read on this repository
+        id: mint
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_PRIVATE_KEY }}
+          owner: swift-standards
+          repositories: swift-fips-180-4
+          permission-contents: read
+      - name: Positive control — the minted token performs its granted read
+        env:
+          GH_TOKEN: ${{ steps.mint.outputs.token }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::mint produced no token"; exit 1; }
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}" --jq .sha
+      - name: Asserted refusal — the minted token cannot write contents
+        env:
+          GH_TOKEN: ${{ steps.mint.outputs.token }}
+        run: |
+          if gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+               -f ref="refs/heads/f13-probe-k08-must-not-exist" \
+               -f sha="${GITHUB_SHA}" >/dev/null 2>probe.err; then
+            echo "::error::a contents:read mint created a ref — scope is wider than requested"
+            exit 1
+          fi
+          echo "write refused as required"; cat probe.err
+      # Scope, not reach: this endpoint is on the SAME repository the mint is
+      # scoped to. It is refused because the mint requested contents:read and
+      # nothing else, which is precisely the permission-dimension assertion.
+      - name: Asserted refusal — the minted token holds no permission beyond contents
+        env:
+          GH_TOKEN: ${{ steps.mint.outputs.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/actions/secrets" >/dev/null 2>probe.err; then
+            echo "::error::a contents:read mint read Actions secrets — scope is wider than requested"
+            exit 1
+          fi
+          echo "out-of-permission endpoint refused as required"; cat probe.err
+      # Repository dimension. Recorded as an OBSERVATION, not an assertion: the
+      # comparison target is public, and an installation token may be allowed a
+      # public read regardless of the installation's repository selection. A
+      # refusal here is informative; a success would NOT by itself refute the
+      # repository scoping.
+      - name: Observation — repository dimension of the mint's selection
+        env:
+          GH_TOKEN: ${{ steps.mint.outputs.token }}
+        run: |
+          if gh api "repos/swift-institute/.github/commits" --jq '.[0].sha' >/dev/null 2>probe.err; then
+            echo "out-of-selection PUBLIC repository readable (does not refute scoping)"
+          else
+            echo "out-of-selection repository refused"; cat probe.err
+          fi
+
+  # K-08c: exposure surface. The three org secrets are visibility "all", so a
+  # workflow on any repository in the org that NAMES them receives them. This
+  # job asserts that reachability so the fail-closed property is understood to
+  # rest on leaves never naming them, not on the secrets being unavailable.
+  # Presence only — no value is printed, compared, or written anywhere.
+  #
+  # Slot D additionally measures the K-01/K-02 residual on a hosted run: the
+  # frozen terminal two-name map names SWIFT_INSTITUTE_BOT_APP_ID. If slot D is
+  # WITHHELD here, that map forwards an empty secret in this org, which is the
+  # F14 blocker recorded on #393 — measured, not inferred from an API readback.
+  k08c-named-reachability:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Measured presence — named org secrets are delivered to this repo
+        env:
+          A: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_CLIENT_ID }}
+          B: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_PRIVATE_KEY }}
+          C: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          D: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_ID }}
+          E: ${{ secrets.F13_SLOT_THAT_DOES_NOT_EXIST }}
+        run: |
+          for n in A B C D E; do
+            if [ -n "${!n}" ]; then echo "slot $n: delivered"; else echo "slot $n: withheld"; fi
           done
+          # Negative control: slot E names a secret that exists nowhere. If it
+          # ever reports "delivered", this instrument is not measuring delivery.
+          [ -z "${E}" ] || { echo "::error::negative control delivered — instrument invalid"; exit 1; }
+          # Positive control: at least one known-present slot must be delivered,
+          # otherwise "withheld" everywhere could mean the secrets context is
+          # simply not wired into this job at all.
+          [ -n "${B}" ] || { echo "::error::known-present PRIVATE_KEY withheld — instrument inert"; exit 1; }
+
+  # K-05: a same-repo untrusted pull request carrying a hostile manifest or
+  # build plugin observes no key, token, or private material. Runs only on the
+  # pull_request event, where the head is the untrusted content.
+  k05-untrusted-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Positive control — the hostile step really executes in the job
+        env:
+          CONTROL: ${{ github.token }}
+        run: |
+          [ -n "$CONTROL" ] || { echo "::error::control empty — probe cannot report"; exit 1; }
+          echo "hostile step executing as PR head content; control token present"
+      - name: Asserted absence — hostile step sees no key or PAT material
+        run: |
+          hits=0
+          while IFS='=' read -r name _; do
+            case "$name" in
+              *APP_PRIVATE_KEY*|*APP_CLIENT_ID*|*PRIVATE_REPO_TOKEN*|*_PAT|*_PAT_*)
+                echo "::error::credential-shaped variable observable to PR head content: $name"
+                hits=$((hits+1)) ;;
+            esac
+          done < <(env)
+          for f in "$HOME/.netrc" "$HOME/.git-credentials" "$HOME/.ssh/id_rsa" "$HOME/.ssh/id_ed25519"; do
+            if [ -f "$f" ]; then
+              echo "::error::private material on disk: $f"
+              hits=$((hits+1))
+            fi
+          done
+          [ "$hits" -eq 0 ] || exit 1
+          echo "no key, token, or private material observable, as required"
+      - name: Asserted refusal — any credential persisted by checkout cannot write
+        run: |
+          git config --get-regexp '^http\..*\.extraheader' >/dev/null 2>&1 \
+            && echo "checkout persisted a credential header (value never printed)" \
+            || echo "checkout persisted no credential header"
+          # NOTE: must stay in `if` form. `git push ... && { exit 1; }` returns
+          # non-zero on the DESIRED outcome and `set -e` then fails the job, so
+          # a correct refusal would be reported as a canary failure.
+          if git push origin "HEAD:refs/heads/f13-probe-k05-must-not-exist" >push.err 2>&1; then
+            echo "::error::PR head content pushed a ref — untrusted content holds write"
+            exit 1
+          fi
+          echo "push refused as required"
+          grep -o -i -e 'denied' -e 'permission' -e '403' push.err | head -3 || true
