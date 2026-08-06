@@ -1,0 +1,75 @@
+# F13 permission canaries (Goal swift-institute/.github#358, #393).
+# Branch-only, dispatch-only: never fires on push, so it cannot perturb
+# the direct-caller leaf's context evidence. Deleted with the branch.
+#
+# Each job asserts the DENIAL, not merely the absence of a success:
+# a step that expects refusal fails the job when the operation succeeds,
+# so a broken probe cannot read as a clean result.
+name: f13-permission-probe
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # K-06: the direct form's root ceiling. Reads work; writes are denied.
+  k06-read-ceiling:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Read is permitted (positive control)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}" --jq .sha
+      - name: Write is denied (asserted refusal)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+               -f ref="refs/heads/f13-probe-must-not-exist" \
+               -f sha="${GITHUB_SHA}" 2>probe.err; then
+            echo "::error::contents:read token created a ref — the ceiling does not hold"
+            exit 1
+          fi
+          echo "refused as required:"; cat probe.err
+
+  # K-07: a job that omits the read it needs cannot elevate itself.
+  k07-no-elevation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: none
+    steps:
+      - name: Required read fails without the grant (asserted refusal)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/contents/Package.swift" >/dev/null 2>probe.err; then
+            echo "::error::contents:none token read repository contents — elevation is possible"
+            exit 1
+          fi
+          echo "refused as required:"; cat probe.err
+
+  # K-08: no App key or token is observable in an ordinary subject job.
+  k08-mint-isolation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: App credentials are absent from the subject (asserted absence)
+        env:
+          APP_ID: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_ID }}
+          APP_KEY: ${{ secrets.SWIFT_INSTITUTE_BOT_APP_PRIVATE_KEY }}
+          LEGACY_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          CONTROL: ${{ github.token }}
+        run: |
+          [ -n "$CONTROL" ] || { echo "::error::positive control empty — probe cannot report"; exit 1; }
+          for name in APP_ID APP_KEY LEGACY_TOKEN; do
+            if [ -n "${!name}" ]; then
+              echo "::error::$name is observable in an ordinary subject job"
+              exit 1
+            fi
+            echo "$name absent as required"
+          done
