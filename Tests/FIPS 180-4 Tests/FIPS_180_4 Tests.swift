@@ -99,6 +99,17 @@ struct FIPS1804Tests {
         }
 
         @Test
+        func `isDigestHex accepts exactly the function's own rendering width`() {
+            let sha1 = FIPS_180_4.SHA1.digest(FIPS1804Tests.abc).hex
+            let sha256 = FIPS_180_4.SHA256.digest(FIPS1804Tests.abc).hex
+            #expect(FIPS_180_4.SHA1.isDigestHex(sha1))
+            #expect(FIPS_180_4.SHA256.isDigestHex(sha256))
+            #expect(!FIPS_180_4.SHA1.isDigestHex(sha256))
+            #expect(!FIPS_180_4.SHA256.isDigestHex(sha1))
+            #expect(!FIPS_180_4.SHA1.isDigestHex(sha1.uppercased()))
+        }
+
+        @Test
         func `digest lengths match the standard`() {
             #expect(FIPS_180_4.SHA1.digest([]).bytes.count == FIPS_180_4.SHA1.digestLength)
             #expect(FIPS_180_4.SHA256.digest([]).bytes.count == FIPS_180_4.SHA256.digestLength)
