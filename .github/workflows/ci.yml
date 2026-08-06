@@ -3,12 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - main
-    tags:
-      - '*'
+      - f13-direct-canary
   pull_request:
     branches:
-      - main
+      - f13-direct-canary
   workflow_dispatch:
 
 permissions:
@@ -21,5 +19,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: swift-standards/.github/.github/workflows/swift-ci.yml@main
-    secrets: inherit
+    name: ci / matrix
+    uses: swift-institute/.github/.github/workflows/swift-ci.yml@main
+    with:
+      lint-bundle: standards
