@@ -35,6 +35,22 @@ struct FIPS1804Tests {
         }
 
         @Test
+        func `sha1 matches the standards vectors`() {
+            #expect(
+                FIPS_180_4.SHA1.digest([]).hex
+                    == "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+            )
+            #expect(
+                FIPS_180_4.SHA1.digest(FIPS1804Tests.abc).hex
+                    == "a9993e364706816aba3e25717850c26c9cd0d89d"
+            )
+            #expect(
+                FIPS_180_4.SHA1.digest(FIPS1804Tests.twoBlock).hex
+                    == "84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+            )
+        }
+
+        @Test
         func `sha384 matches the standards vectors`() {
             #expect(
                 FIPS_180_4.SHA384.digest([]).hex
@@ -70,7 +86,21 @@ struct FIPS1804Tests {
     @Suite
     struct `Edge Case` {
         @Test
+        func `hex parse is the exact inverse of hex rendering`() {
+            let digest = FIPS_180_4.SHA1.digest(FIPS1804Tests.abc)
+            #expect(FIPS_180_4.Digest(hex: digest.hex) == digest)
+        }
+
+        @Test
+        func `hex parse refuses non-lowercase, odd, and non-hex input`() {
+            #expect(FIPS_180_4.Digest(hex: "A9993E364706816ABA3E25717850C26C9CD0D89D") == nil)
+            #expect(FIPS_180_4.Digest(hex: "a9993e364706816aba3e25717850c26c9cd0d89") == nil)
+            #expect(FIPS_180_4.Digest(hex: "g9993e364706816aba3e25717850c26c9cd0d89d") == nil)
+        }
+
+        @Test
         func `digest lengths match the standard`() {
+            #expect(FIPS_180_4.SHA1.digest([]).bytes.count == FIPS_180_4.SHA1.digestLength)
             #expect(FIPS_180_4.SHA256.digest([]).bytes.count == FIPS_180_4.SHA256.digestLength)
             #expect(FIPS_180_4.SHA384.digest([]).bytes.count == FIPS_180_4.SHA384.digestLength)
             #expect(FIPS_180_4.SHA512.digest([]).bytes.count == FIPS_180_4.SHA512.digestLength)

@@ -24,4 +24,14 @@ extension FIPS_180_4.Digest {
     public var hex: String {
         Binary.Base.`16`.encode(bytes, alphabet: Self.lowercaseHexAlphabet)
     }
+
+    /// The inverse of `hex`: parses a lowercase base-16 rendering back
+    /// into digest bytes, or nil when `hex` is not exact lowercase
+    /// base-16. Width interpretation belongs to consumers — compare
+    /// `bytes.count` against the relevant function's `digestLength`.
+    public init?(hex: String) {
+        guard let bytes = Binary.Base.`16`.decode(hex, alphabet: Self.lowercaseHexAlphabet)
+        else { return nil }
+        self.init(bytes: bytes)
+    }
 }
