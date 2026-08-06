@@ -1,6 +1,8 @@
 # F13 permission canaries (Goal swift-institute/.github#358, #393).
-# Branch-only, dispatch-only: never fires on push, so it cannot perturb
-# the direct-caller leaf's context evidence. Deleted with the branch.
+# Branch-only: a workflow absent from the default branch cannot be
+# dispatched by name (GitHub 404s the lookup), so it fires on push to
+# this canary branch. The leaf's context evidence is already sealed at
+# run 31094028413. Deleted with the branch.
 #
 # Each job asserts the DENIAL, not merely the absence of a success:
 # a step that expects refusal fails the job when the operation succeeds,
@@ -8,7 +10,9 @@
 name: f13-permission-probe
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - f13-direct-canary
 
 permissions: {}
 
