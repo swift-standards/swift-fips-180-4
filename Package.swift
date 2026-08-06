@@ -2,8 +2,8 @@
 
 import PackageDescription
 
-// FIPS 180-4 — the Secure Hash Standard's SHA-2 digest surface, typed
-// once and witnessed over pinned swift-crypto (ruling R37,
+// FIPS 180-4 — the Secure Hash Standard's digest surface (SHA-1 and
+// SHA-2), typed once and witnessed over pinned swift-crypto (ruling R37,
 // swift-institute/.github#361). No native hash implementation lives
 // here or anywhere in the Institute (CO-05).
 let package = Package(
