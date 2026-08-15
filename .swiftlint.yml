@@ -1,4 +1,0 @@
-# SwiftLint configuration for swift-fips-180-4
-# Inherits from the shared parent configuration in swift-standards
-
-parent_config: https://raw.githubusercontent.com/swift-standards/.github/main/.swiftlint.yml
