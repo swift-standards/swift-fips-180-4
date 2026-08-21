@@ -2,9 +2,6 @@ import Byte_Primitives
 import FIPS_180_4
 import Testing
 
-/// NIST FIPS 180-4 / SHA-2 test vectors (NIST CAVP "SHA Test Vectors
-/// for Hashing Byte-Oriented Messages" short-message examples plus the
-/// standard's own "abc" and empty-message examples).
 @Suite
 struct FIPS1804Tests {
     static let abc: [Byte] = Array("abc".utf8).map(Byte.init)
@@ -119,7 +116,7 @@ struct FIPS1804Tests {
 
         @Test
         func `negative control refuses a corrupted vector`() {
-            // One flipped nibble must not verify — proves the comparator fires.
+
             #expect(
                 FIPS_180_4.SHA256.digest(FIPS1804Tests.abc).hex
                     != "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ae"
