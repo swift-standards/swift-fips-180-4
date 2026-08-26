@@ -1,4 +1,4 @@
-public import Byte_Primitives
+public import Byte
 internal import Crypto
 
 extension FIPS_180_4 {

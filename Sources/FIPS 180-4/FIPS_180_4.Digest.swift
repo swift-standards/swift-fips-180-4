@@ -1,5 +1,5 @@
-internal import Binary_Base_Primitives
-public import Byte_Primitives
+internal import Binary_Base
+public import Byte
 
 extension FIPS_180_4 {
 
