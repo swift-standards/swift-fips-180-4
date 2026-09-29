@@ -20,6 +20,6 @@ extension FIPS_180_4.SHA384 {
         raw.withUnsafeBytes { buffer in
             hasher.update(bufferPointer: buffer)
         }
-        return FIPS_180_4.Digest(bytes: Array(hasher.finalize()).map(Byte.init))
+        return FIPS_180_4.Digest(bytes: Array(hasher.finalize()).map(Byte.init(_:)))
     }
 }

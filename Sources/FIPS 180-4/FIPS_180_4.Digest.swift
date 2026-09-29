@@ -15,7 +15,7 @@ extension FIPS_180_4 {
 extension FIPS_180_4.Digest {
 
     @usableFromInline
-    static let lowercaseHexAlphabet: [Byte] = Array("0123456789abcdef".utf8).map(Byte.init)
+    static let lowercaseHexAlphabet: [Byte] = Array("0123456789abcdef".utf8).map(Byte.init(_:))
 
     public var hex: String {
         Binary.Base.`16`.encode(bytes, alphabet: Self.lowercaseHexAlphabet)

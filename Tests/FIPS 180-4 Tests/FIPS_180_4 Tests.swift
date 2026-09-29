@@ -4,14 +4,14 @@ import Testing
 
 @Suite
 struct FIPS1804Tests {
-    static let abc: [Byte] = Array("abc".utf8).map(Byte.init)
+    static let abc: [Byte] = Array("abc".utf8).map(Byte.init(_:))
     static let twoBlock: [Byte] = Array(
         "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq".utf8
-    ).map(Byte.init)
+    ).map(Byte.init(_:))
     static let twoBlock512: [Byte] = Array(
         ("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
             + "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu").utf8
-    ).map(Byte.init)
+    ).map(Byte.init(_:))
 
     @Suite
     struct Unit {
