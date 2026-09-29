@@ -1,4 +1,4 @@
-internal import Binary_Base
+internal import Binary
 public import Byte
 
 extension FIPS_180_4 {

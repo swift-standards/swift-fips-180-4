@@ -17,13 +17,10 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.5.1"),
         .package(
-            url: "https://github.com/swift-molecules/swift-byte.git",
+            url: "https://github.com/swift-atoms/swift-byte.git",
             branch: "main"
         ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-binary-base.git",
-            branch: "main"
-        ),
+        .package(url: "https://github.com/swift-atoms/swift-binary.git", branch: "main", traits: ["Base"]),
     ],
     targets: [
         .target(
@@ -31,7 +28,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Byte", package: "swift-byte"),
-                .product(name: "Binary Base", package: "swift-binary-base"),
+                .product(name: "Binary", package: "swift-binary"),
             ]
         ),
         .testTarget(
