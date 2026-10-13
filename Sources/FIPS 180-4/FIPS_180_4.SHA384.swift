@@ -18,7 +18,7 @@ extension FIPS_180_4.SHA384 {
         let raw = bytes.map(\.underlying)
         var hasher = Crypto.SHA384()
         raw.withUnsafeBytes { buffer in
-            hasher.update(bufferPointer: buffer)
+            unsafe hasher.update(bufferPointer: buffer)
         }
         return FIPS_180_4.Digest(bytes: Array(hasher.finalize()).map(Byte.init(_:)))
     }
