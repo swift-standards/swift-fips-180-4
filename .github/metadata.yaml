@@ -1,0 +1,4 @@
+description: "FIPS 180-4 Secure Hash Standard: the Institute's typed SHA-2 digest surface, witnessed over pinned swift-crypto"
+homepage: "https://swift-institute.org"
+readme:
+  family: E
