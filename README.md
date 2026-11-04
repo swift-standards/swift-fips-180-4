@@ -1,21 +1,9 @@
 # swift-fips-180-4
 
-![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
+Use this package when you need a SHA-1, SHA-256, SHA-384 or SHA-512 digest of bytes, or need to check that a string is such a digest in hex. Start from `FIPS_180_4.SHA256`, or `FIPS_180_4.SHA1`, `FIPS_180_4.SHA384` or `FIPS_180_4.SHA512`, and work with the `FIPS_180_4.Digest` they return. SHA-224, SHA-512/224 and SHA-512/256 are not provided.
 
-FIPS 180-4 (Secure Hash Standard): the Institute's typed SHA-2 digest surface, witnessed over pinned swift-crypto.
+## Laws
 
-## Overview
-
-This package types SHA-256, SHA-384, and SHA-512 digests once for the whole ecosystem under the `FIPS 180-4` target (`FIPS_180_4.SHA256.digest(_:)` and friends, returning a byte-exact `FIPS_180_4.Digest` with lowercase-hex rendering). It implements no hash arithmetic: every digest is computed by pinned [swift-crypto](https://github.com/apple/swift-crypto), and this package is the single sanctioned seam to it (ruling R37, swift-institute/.github#361 — consumers never adopt swift-crypto directly, and no native implementation exists anywhere in the Institute).
-
-## Installation
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/swift-standards/swift-fips-180-4.git", branch: "main")
-]
-```
-
-## Verification
-
-The test suite pins the standard's own vectors (empty message, "abc", the one- and two-block CAVP messages) for all three functions, with a corrupted-vector negative control, and runs on Linux and macOS.
+- `FIPS_180_4.Digest.hex` is lowercase, two characters per byte.
+- `FIPS_180_4.Digest.init(hex:)` accepts only lowercase hex of even length and returns nil for anything else, including uppercase. It is the exact inverse of `FIPS_180_4.Digest.hex`.
+- A `FIPS_180_4.Digest` doesn't record which function made it or check its length, so `FIPS_180_4.Digest.init(hex:)` accepts any even-length lowercase hex. To check that a string is a digest of one function, use that function's check, such as `FIPS_180_4.SHA256.isDigestHex(_:)`, which also requires its exact width.
