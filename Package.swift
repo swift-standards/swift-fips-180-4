@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "FIPS 180-4", targets: ["FIPS 180-4"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.5.1"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "5.0.0"),
         .package(
             url: "https://github.com/swift-atoms/swift-byte.git",
             branch: "main"
