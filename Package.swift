@@ -12,7 +12,8 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        .library(name: "FIPS 180-4", targets: ["FIPS 180-4"])
+        .library(name: "FIPS 180-4", targets: ["FIPS 180-4"]),
+        .library(name: "FIPS 180-4 Digest", targets: ["FIPS 180-4 Digest"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "5.0.0"),
@@ -24,11 +25,18 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "FIPS 180-4",
+            name: "FIPS 180-4 Digest",
             dependencies: [
-                .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "Binary", package: "swift-binary"),
+            ]
+        ),
+        .target(
+            name: "FIPS 180-4",
+            dependencies: [
+                .target(name: "FIPS 180-4 Digest"),
+                .product(name: "Crypto", package: "swift-crypto"),
+                .product(name: "Byte", package: "swift-byte"),
             ]
         ),
         .testTarget(
