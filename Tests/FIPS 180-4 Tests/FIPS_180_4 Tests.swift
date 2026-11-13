@@ -135,3 +135,20 @@ struct FIPS1804Tests {
         }
     }
 }
+
+extension FIPS1804Tests {
+    @Test
+    func `A digest fed in pieces is the digest of the whole message`() {
+        let message = (0..<100_000).map { Byte(bitPattern: UInt8(truncatingIfNeeded: $0 &* 31)) }
+        var hasher = FIPS_180_4.SHA256.Hasher()
+        var start = 0
+        for size in [0, 1, 63, 64, 65, 4096, 30_000] {
+            hasher.update(Array(message[start..<start + size]))
+            start += size
+        }
+        let rest: [UInt8] = message[start...].map(\.bitPattern)
+        hasher.update(rest.span.bytes)
+        #expect(hasher.finalize() == FIPS_180_4.SHA256.digest(message))
+        #expect(FIPS_180_4.SHA256.Hasher().finalize().hex == FIPS_180_4.SHA256.digest([]).hex)
+    }
+}
