@@ -2,6 +2,10 @@
 
 Use this package when you need a SHA-1, SHA-256, SHA-384 or SHA-512 digest of bytes, or need to check that a string is such a digest in hex. Start from `FIPS_180_4.SHA256`, or `FIPS_180_4.SHA1`, `FIPS_180_4.SHA384` or `FIPS_180_4.SHA512`, and work with the `FIPS_180_4.Digest` they return. SHA-224, SHA-512/224 and SHA-512/256 are not provided.
 
+## Where the hashing happens
+
+The `FIPS 180-4` product doesn't implement the hash functions itself: it calls [swift-crypto](https://github.com/apple/swift-crypto). On Apple platforms that means CryptoKit, and elsewhere BoringSSL. What this package adds is the Institute's types and checks around those functions. The `FIPS 180-4 Digest` product, which holds the digest value and its hex form, has no dependency on swift-crypto, so code that only stores or compares digests can depend on that product alone.
+
 ## Laws
 
 - `FIPS_180_4.SHA256.Hasher` digests a message fed a piece at a time, each piece read where it lies: the pieces of a message give the digest `FIPS_180_4.SHA256.digest(_:)` gives of the whole. The `digest(_:)` functions read their bytes in place and copy nothing.
