@@ -1,5 +1,4 @@
 public import Byte
-internal import Crypto
 
 extension FIPS_180_4 {
 
@@ -15,10 +14,8 @@ extension FIPS_180_4.SHA256 {
     }
 
     public static func digest(_ bytes: [Byte]) -> FIPS_180_4.Digest {
-        var hasher = Crypto.SHA256()
-        bytes.withUnsafeBytes { buffer in
-            unsafe hasher.update(bufferPointer: buffer)
-        }
-        return FIPS_180_4.Digest(bytes: Array(hasher.finalize()).map(Byte.init(_:)))
+        var hasher = Hasher()
+        hasher.update(bytes)
+        return hasher.finalize()
     }
 }

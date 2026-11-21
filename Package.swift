@@ -16,7 +16,6 @@ let package = Package(
         .library(name: "FIPS 180-4 Digest", targets: ["FIPS 180-4 Digest"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "5.0.0"),
         .package(
             url: "https://github.com/swift-atoms/swift-byte.git",
             branch: "main"
@@ -35,7 +34,6 @@ let package = Package(
             name: "FIPS 180-4",
             dependencies: [
                 .target(name: "FIPS 180-4 Digest"),
-                .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Byte", package: "swift-byte"),
             ]
         ),
