@@ -1,6 +1,6 @@
 # swift-fips-180-4
 
-Use this package when you need a SHA-1, SHA-256, SHA-384 or SHA-512 digest of bytes, or need to check that a string is such a digest in hex. Start from `FIPS_180_4.SHA256`, or `FIPS_180_4.SHA1`, `FIPS_180_4.SHA384` or `FIPS_180_4.SHA512`, and work with the `FIPS_180_4.Digest` they return. SHA-224, SHA-512/224 and SHA-512/256 are not provided.
+Use this package when you need a SHA-1, SHA-256, SHA-384 or SHA-512 digest of bytes, or need to check that a string is such a digest in hex. Start from `NIST.FIPS.`180`.`4`.SHA256`, or `NIST.FIPS.`180`.`4`.SHA1`, `NIST.FIPS.`180`.`4`.SHA384` or `NIST.FIPS.`180`.`4`.SHA512`, and work with the `NIST.FIPS.`180`.`4`.Digest` they return. SHA-224, SHA-512/224 and SHA-512/256 are not provided.
 
 ## Where the hashing happens
 
@@ -8,8 +8,8 @@ The `FIPS 180-4` product doesn't implement the hash functions itself: it calls [
 
 ## Laws
 
-- `FIPS_180_4.SHA256.Hasher` digests a message fed a piece at a time, each piece read where it lies: the pieces of a message give the digest `FIPS_180_4.SHA256.digest(_:)` gives of the whole. The `digest(_:)` functions read their bytes in place and copy nothing.
+- `NIST.FIPS.`180`.`4`.SHA256.Hasher` digests a message fed a piece at a time, each piece read where it lies: the pieces of a message give the digest `NIST.FIPS.`180`.`4`.SHA256.digest(_:)` gives of the whole. The `digest(_:)` functions read their bytes in place and copy nothing.
 
-- `FIPS_180_4.Digest.hex` is lowercase, two characters per byte.
-- `FIPS_180_4.Digest.init(hex:)` accepts only lowercase hex of even length and returns nil for anything else, including uppercase. It is the exact inverse of `FIPS_180_4.Digest.hex`.
-- A `FIPS_180_4.Digest` doesn't record which function made it or check its length, so `FIPS_180_4.Digest.init(hex:)` accepts any even-length lowercase hex. To check that a string is a digest of one function, use that function's check, such as `FIPS_180_4.SHA256.isDigestHex(_:)`, which also requires its exact width.
+- `NIST.FIPS.`180`.`4`.Digest.hex` is lowercase, two characters per byte.
+- `NIST.FIPS.`180`.`4`.Digest.init(hex:)` accepts only lowercase hex of even length and returns nil for anything else, including uppercase. It is the exact inverse of `NIST.FIPS.`180`.`4`.Digest.hex`.
+- A `NIST.FIPS.`180`.`4`.Digest` doesn't record which function made it or check its length, so `NIST.FIPS.`180`.`4`.Digest.init(hex:)` accepts any even-length lowercase hex. To check that a string is a digest of one function, use that function's check, such as `NIST.FIPS.`180`.`4`.SHA256.isDigestHex(_:)`, which also requires its exact width.

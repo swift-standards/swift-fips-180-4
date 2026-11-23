@@ -16,6 +16,7 @@ let package = Package(
         .library(name: "FIPS 180-4 Digest", targets: ["FIPS 180-4 Digest"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-standards/swift-nist.git", branch: "main"),
         .package(
             url: "https://github.com/swift-atoms/swift-byte.git",
             branch: "main"
@@ -26,6 +27,7 @@ let package = Package(
         .target(
             name: "FIPS 180-4 Digest",
             dependencies: [
+                .product(name: "NIST", package: "swift-nist"),
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "Binary", package: "swift-binary"),
             ]

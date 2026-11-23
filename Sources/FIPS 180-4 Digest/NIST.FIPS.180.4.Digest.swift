@@ -1,7 +1,7 @@
 internal import Binary
 public import Byte
 
-extension FIPS_180_4 {
+extension NIST.FIPS.`180`.`4` {
 
     public struct Digest: Sendable, Equatable, Hashable {
         public let bytes: [Byte]
@@ -12,7 +12,7 @@ extension FIPS_180_4 {
     }
 }
 
-extension FIPS_180_4.Digest {
+extension NIST.FIPS.`180`.`4`.Digest {
 
     @usableFromInline
     static let lowercaseHexAlphabet: [Byte] = Array("0123456789abcdef".utf8).map(Byte.init(_:))
@@ -34,7 +34,7 @@ extension FIPS_180_4.Digest {
     }
 }
 
-extension FIPS_180_4.Digest: Codable {
+extension NIST.FIPS.`180`.`4`.Digest: Codable {
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()

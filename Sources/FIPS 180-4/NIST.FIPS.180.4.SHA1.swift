@@ -1,19 +1,19 @@
 public import Byte
 
-extension FIPS_180_4 {
+extension NIST.FIPS.`180`.`4` {
 
     public enum SHA1 {}
 }
 
-extension FIPS_180_4.SHA1 {
+extension NIST.FIPS.`180`.`4`.SHA1 {
 
     public static let digestLength = 20
 
     public static func isDigestHex(_ value: String) -> Bool {
-        FIPS_180_4.Digest(hex: value)?.bytes.count == digestLength
+        NIST.FIPS.`180`.`4`.Digest(hex: value)?.bytes.count == digestLength
     }
 
-    public static func digest(_ bytes: [Byte]) -> FIPS_180_4.Digest {
+    public static func digest(_ bytes: [Byte]) -> NIST.FIPS.`180`.`4`.Digest {
         var h0: UInt32 = 0x6745_2301
         var h1: UInt32 = 0xefcd_ab89
         var h2: UInt32 = 0x98ba_dcfe
@@ -104,6 +104,6 @@ extension FIPS_180_4.SHA1 {
             result.append(Byte(UInt8(truncatingIfNeeded: word >> 8)))
             result.append(Byte(UInt8(truncatingIfNeeded: word)))
         }
-        return FIPS_180_4.Digest(bytes: result)
+        return NIST.FIPS.`180`.`4`.Digest(bytes: result)
     }
 }

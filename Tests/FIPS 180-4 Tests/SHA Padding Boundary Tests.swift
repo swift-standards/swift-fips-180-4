@@ -102,10 +102,10 @@ extension `SHA Padding Boundary Tests` {
         @Test(arguments: vectors)
         func `digests of repeated a match an independent oracle at every padding boundary`(_ vector: (Int, String, String, String, String)) {
             let message = Self.message(vector.0)
-            #expect(FIPS_180_4.SHA1.digest(message).hex == vector.1)
-            #expect(FIPS_180_4.SHA256.digest(message).hex == vector.2)
-            #expect(FIPS_180_4.SHA384.digest(message).hex == vector.3)
-            #expect(FIPS_180_4.SHA512.digest(message).hex == vector.4)
+            #expect(NIST.FIPS.`180`.`4`.SHA1.digest(message).hex == vector.1)
+            #expect(NIST.FIPS.`180`.`4`.SHA256.digest(message).hex == vector.2)
+            #expect(NIST.FIPS.`180`.`4`.SHA384.digest(message).hex == vector.3)
+            #expect(NIST.FIPS.`180`.`4`.SHA512.digest(message).hex == vector.4)
         }
     }
 }

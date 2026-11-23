@@ -1,6 +1,6 @@
 public import Byte
 
-extension FIPS_180_4.SHA256 {
+extension NIST.FIPS.`180`.`4`.SHA256 {
     /// A SHA-256 digest of bytes fed a piece at a time, each piece read where it lies: feeding the pieces of a
     /// message gives the digest of the whole message, as `FIPS_180_4.SHA256.digest(_:)` does.
     public struct Hasher: Sendable {
@@ -21,7 +21,7 @@ extension FIPS_180_4.SHA256 {
     }
 }
 
-extension FIPS_180_4.SHA256.Hasher {
+extension NIST.FIPS.`180`.`4`.SHA256.Hasher {
     private static let k: [UInt32] = [
         0x428a_2f98, 0x7137_4491, 0xb5c0_fbcf, 0xe9b5_dba5, 0x3956_c25b, 0x59f1_11f1, 0x923f_82a4, 0xab1c_5ed5,
         0xd807_aa98, 0x1283_5b01, 0x2431_85be, 0x550c_7dc3, 0x72be_5d74, 0x80de_b1fe, 0x9bdc_06a7, 0xc19b_f174,
@@ -120,7 +120,7 @@ extension FIPS_180_4.SHA256.Hasher {
     }
 
     /// The digest of every byte fed so far. Feeding more afterwards continues the same message.
-    public func finalize() -> FIPS_180_4.Digest {
+    public func finalize() -> NIST.FIPS.`180`.`4`.Digest {
         var copy = self
         let bitLength = copy.totalBytes &* 8
         copy.appendByte(0x80)
@@ -141,6 +141,6 @@ extension FIPS_180_4.SHA256.Hasher {
             result.append(Byte(UInt8(truncatingIfNeeded: word >> 8)))
             result.append(Byte(UInt8(truncatingIfNeeded: word)))
         }
-        return FIPS_180_4.Digest(bytes: result)
+        return NIST.FIPS.`180`.`4`.Digest(bytes: result)
     }
 }
